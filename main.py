@@ -127,7 +127,7 @@ def fetch_pilotedge_atis(icao):
     if len(r.data) < 3:
         return None
     d = json.loads(r.data.decode('utf-8'))
-    return d['text'].replace('\n', '')
+    return d['text'].replace('\n', ' ')
     
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
