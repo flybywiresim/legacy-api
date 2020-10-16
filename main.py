@@ -86,7 +86,7 @@ def fetch_vatsim(icao):
 def fetch_pilotedge(icao):
     r = http.request('GET', 'https://www.pilotedge.net/atis/' + icao + '.json')
     print(r.data)
-    if not r.data:
+    if len(r.data) < 2:
         return None
     d = json.loads(r.data.decode('utf-8'))
     return d['metar']
