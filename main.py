@@ -21,6 +21,7 @@ FBW_INVALID_SRC = 'FBW_ERROR: Invalid METAR source'
 app = Flask(__name__)
 cache = Cache(app, config={
     'CACHE_TYPE': 'filesystem',
+    'CACHE_DIR': '/api_cache'
 })
 http = urllib3.PoolManager()
 
