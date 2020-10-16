@@ -166,6 +166,7 @@ def fetch_vatsim_atis(icao):
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
 def fetch_ivao_atis(icao):
     lines = fetch_ivao_whazzup_blob()
+    print(lines)
     target = icao + '_TWR'
     result = [i for i in lines if target in i[0:8]]
     atis = result[0].split(':')[35]
