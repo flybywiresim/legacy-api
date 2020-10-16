@@ -1,7 +1,7 @@
 import urllib3
 from flask import Flask
 from flask import request
-# import httplib2
+
 app = Flask(__name__)
 
 @app.route("/")
@@ -19,9 +19,9 @@ def mreq():
     if request.args and 'icao' in request.args and 'source' in request.args:
         icao = request.args.get('icao').upper()
         source = request.args.get('source').lower()
-    elif request.json and 'icao' in request_json and 'source' in request_json:
-        icao = request_json['icao'].upper()
-        source = request_json['source'].lower()
+#     elif request.json and 'icao' in request_json and 'source' in request_json:
+#         icao = request_json['icao'].upper()
+#         source = request_json['source'].lower()
     else:
         return ('FBW_ERROR: Provide source and ICAO arguments.', 200, headers)
     
