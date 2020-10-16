@@ -26,6 +26,7 @@ def mreq():
     
     if source == 'vatsim':
         result = fetch_vatsim(icao)
+        return result
         if result == '':
             return ("FBW_ERROR: ICAO not found.", 200, headers)
         else:
