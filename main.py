@@ -173,9 +173,7 @@ def fetch_ivao_atis(icao):
     if not result or atis == '':
         return None
     atis_tmp = atis.split('^§')[1:]
-    atis_msg = ''.join(atis_tmp)
-    print(atis_msg)
-    atis_msg = atis_msg.replace('^§', ' ')
+    atis_msg = ' '.join(atis_tmp)
     return {"combined": atis_msg}
     
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
