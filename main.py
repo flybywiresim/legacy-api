@@ -5,6 +5,7 @@ from flask_caching import Cache
 
 app = Flask(__name__)
 cache = Cache(app,config={'CACHE_TYPE': 'simple'})
+http = urllib3.PoolManager()
 
 #@cache.cached(timeout=240, key_prefix='msblob')
 def fetch_ms_blob():
@@ -27,7 +28,6 @@ def index():
 
 @app.route("/metar")
 def mreq():
-    http = urllib3.PoolManager()
     headers = {
         'Access-Control-Allow-Origin': '*',
         'Cache-Control': 'no-cache'
