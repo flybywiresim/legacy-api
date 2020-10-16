@@ -1,6 +1,4 @@
 from flask import Flask
-from flask import request
-from flask import jsonify
 import urllib3
 import httplib2
 app = Flask(__name__)
