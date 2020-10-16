@@ -1,4 +1,3 @@
-import os
 import urllib3
 from flask import Flask
 from flask import request
@@ -14,7 +13,6 @@ FBW_WELCOME_MSG = "FlyByWire Simulations API v1.0"
 FBW_INVALID_ARGS = 'FBW_ERROR: Provide source and ICAO arguments'
 FBW_INVALID_ICAO = 'FBW_ERROR: ICAO not found'
 FBW_INVALID_SRC = 'FBW_ERROR: Invalid METAR source'
-REDIS_KEY = os.environ.get("REDISPW")
 
 ####################################
 ########## INITIALIZATION ##########
@@ -25,7 +23,6 @@ cache = Cache(app, config={
     'CACHE_TYPE': 'redis',
     'CACHE_KEY_PREFIX': 'apicache',
     'CACHE_REDIS_HOST': 'localhost',
-    'CACHE_REDIS_PASSWORD': REDIS_KEY,
     'CACHE_REDIS_PORT': '6379',
     'CACHE_REDIS_URL': 'redis://localhost:6379'
 })
