@@ -1,8 +1,12 @@
 import urllib3
 from flask import Flask
 from flask import request
+from flask_caching import Cache
 
+cache = Cache()
 app = Flask(__name__)
+cache.init_app(app)
+app.config['CACHE_TYPE'] = 'filesystem'
 
 @app.route("/")
 def index():
@@ -10,7 +14,6 @@ def index():
 
 @app.route("/metar")
 def mreq():
-    request_json = request.get_json()
     http = urllib3.PoolManager()
     headers = {
         'Access-Control-Allow-Origin': '*'
@@ -19,31 +22,39 @@ def mreq():
     if request.args and 'icao' in request.args and 'source' in request.args:
         icao = request.args.get('icao').upper()
         source = request.args.get('source').lower()
-#     elif request.json and 'icao' in request_json and 'source' in request_json:
-#         icao = request_json['icao'].upper()
-#         source = request_json['source'].lower()
     else:
         return ('FBW_ERROR: Provide source and ICAO arguments.', 200, headers)
     
     if source == 'vatsim':
-        endpoint = 'http://metar.vatsim.net/metar.php?id=' + icao
-        r = http.request('GET', endpoint)
-        if r.data == '':
+        result = fetch_vatsim()
+        if rresult == '':
             return ("FBW_ERROR: ICAO not found.", 200, headers)
         else:
-            return (r.data, 200, headers) 
+            return (result, 200, headers) 
     elif source == 'ms':
-        endpoint = 'https://fsxweatherstorage.blob.core.windows.net/fsxweather/metars.bin'
-        r = http.request('GET', endpoint)
-        lines = r.data.decode("utf-8").splitlines()
-        result = [i for i in lines if icao in i[0:4]]
         try:
-           metar = result[0]
+           metar = fetch_ms()[0]
         except:
            return ("FBW_ERROR: ICAO not found.", 200, headers)
         return (metar, 200, headers)
     else:
         return ('FBW_ERROR: Provide a valid METAR source.', 200, headers)
 
+@cache.cached(timeout=240, key_prefix='msblob')
+def fetch_ms_blob():
+    r = http.request('GET', 'https://fsxweatherstorage.blob.core.windows.net/fsxweather/metars.bin')
+    return r.data.decode("utf-8").splitlines()
+
+@cache.memoize(timeout=120, key_prefix='ms')
+def fetch_ms(icao):
+    lines = fetch_ms()
+    return [i for i in lines if icao in i[0:4]]
+
+@cache.memoize(timeout=120, key_prefix='vatsim')
+def fetch_vatsim(icao):
+    endpoint = 'http://metar.vatsim.net/metar.php?id=' + icao
+    r = http.request('GET', endpoint)
+    return r.data
+    
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
