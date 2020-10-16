@@ -48,6 +48,8 @@ def mreq():
         metar = fetch_ms(icao)
     elif source == 'pilotedge':
         metar = fetch_pilotedge(icao)
+    elif source == 'ivao':
+        metar = fetch_ivao(icao)
     else:
         return render(FBW_INVALID_SRC)
     
@@ -71,6 +73,11 @@ def fetch_ms_blob():
     r = http.request('GET', 'https://fsxweatherstorage.blob.core.windows.net/fsxweather/metars.bin')
     return r.data.decode("utf-8").splitlines()
 
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix='ivaoblob')
+def fetch_ivao_blob():
+    r = http.request('GET', 'http://wx.ivao.aero/metar.php')
+    return r.data.decode("utf-8").splitlines()
+
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
 def fetch_ms(icao):
     lines = fetch_ms_blob()
@@ -83,10 +90,15 @@ def fetch_vatsim(icao):
     return r.data
 
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
+def fetch_ivao(icao):
+    lines = fetch_ivao_blob()
+    result = [i for i in lines if icao in i[0:3]]
+    return result[0] if result else None
+
+@cache.memoize(timeout=MEMOIZE_TIMEOUT)
 def fetch_pilotedge(icao):
     r = http.request('GET', 'https://www.pilotedge.net/atis/' + icao + '.json')
-    print(r.data)
-    if len(r.data) < 2:
+    if len(r.data) < 3:
         return None
     d = json.loads(r.data.decode('utf-8'))
     return d['metar']
