@@ -168,10 +168,11 @@ def fetch_ivao_atis(icao):
     lines = fetch_ivao_whazzup_blob()
     target = icao + '_TWR'
     result = [i for i in lines if target in i[0:8]]
-    if not result or result[35] == '':
+    atis = result.split(':')[35]
+    if not result or atis == '':
         return None
-    atis = result.split(':')[35].split['^§'][1:].join('').replace('^§', ' ')
-    return {"combined": atis}
+    atis_msg = atis.split['^§'][1:].join('').replace('^§', ' ')
+    return {"combined": atis_msg}
     
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
 def fetch_pilotedge_atis(icao):
