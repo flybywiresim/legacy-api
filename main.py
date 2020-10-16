@@ -20,11 +20,7 @@ FBW_INVALID_SRC = 'FBW_ERROR: Invalid METAR source'
 
 app = Flask(__name__)
 cache = Cache(app, config={
-    'CACHE_TYPE': 'redis',
-    'CACHE_KEY_PREFIX': 'apicache',
-    'CACHE_REDIS_HOST': 'localhost',
-    'CACHE_REDIS_PORT': '6379',
-    'CACHE_REDIS_URL': 'redis://localhost:6379'
+    'CACHE_TYPE': 'filesystem',
 })
 http = urllib3.PoolManager()
 
