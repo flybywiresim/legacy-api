@@ -85,6 +85,7 @@ def fetch_vatsim(icao):
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
 def fetch_pilotedge(icao):
     r = http.request('GET', 'https://www.pilotedge.net/atis/' + icao + '.json')
+    print(r.data)
     if not r.data:
         return None
     d = json.loads(r.data.decode('utf-8'))
