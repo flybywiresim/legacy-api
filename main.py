@@ -132,9 +132,9 @@ def fetch_faa_atis(icao):
         return None
     atis = {}
     for a in d:
-        if 'arr' in a:
+        if a['type'] == 'arr':
             atis['arr'] = a['datis']
-        elif 'dep' in a:
+        elif a['type'] == 'dep':
             atis['dep'] = a['datis']
         else:
             atis['combined'] = a['datis']
