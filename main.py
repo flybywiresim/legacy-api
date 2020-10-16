@@ -92,7 +92,7 @@ def fetch_vatsim(icao):
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
 def fetch_ivao(icao):
     lines = fetch_ivao_blob()
-    result = [i for i in lines if icao in i[0:3]]
+    result = [i for i in lines if icao in i[0:4]]
     return result[0] if result else None
 
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
