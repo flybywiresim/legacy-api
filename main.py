@@ -153,7 +153,7 @@ def fetch_vatsim_atis(icao):
     clients = vdata['clients']
     target = icao + '_ATIS'
     atis = [i for i in clients if i['callsign'] == target and i['atis_message'] is not None]
-    return {"combined": atis[0]['atis_message']} if atis else None
+    return {"combined": atis[0]['atis_message'].replace('^§', ' ')} if atis else None
 
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
 def fetch_pilotedge_atis(icao):
