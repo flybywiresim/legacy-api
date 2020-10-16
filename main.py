@@ -14,7 +14,8 @@ def index():
 def mreq():
     http = urllib3.PoolManager()
     headers = {
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-cache'
     }
 
     if request.args and 'icao' in request.args and 'source' in request.args:
