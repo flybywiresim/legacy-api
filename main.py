@@ -169,8 +169,10 @@ def fetch_ivao_atis(icao):
     print(lines)
     target = icao + '_TWR'
     result = [i for i in lines if target in i[0:8]]
+    if not result:
+        return None
     atis = result[0].split(':')[35]
-    if not result or atis == '':
+    if len(atis) < 3:
         return None
     atis_tmp = atis.split('^§')[1:]
     atis_msg = ' '.join(atis_tmp)
