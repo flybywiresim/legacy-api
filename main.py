@@ -6,6 +6,21 @@ from flask_caching import Cache
 app = Flask(__name__)
 cache = Cache(app,config={'CACHE_TYPE': 'simple'})
 
+#@cache.cached(timeout=240, key_prefix='msblob')
+def fetch_ms_blob():
+    r = http.request('GET', 'https://fsxweatherstorage.blob.core.windows.net/fsxweather/metars.bin')
+    return r.data.decode("utf-8").splitlines()
+
+#@cache.memoize(timeout=120, key_prefix='ms')
+def fetch_ms(icao):
+    lines = fetch_ms_blob()
+    return [i for i in lines if icao in i[0:4]]
+
+#@cache.memoize(timeout=120, key_prefix='vatsim')
+def fetch_vatsim(icao):
+    r = http.request('GET', 'http://metar.vatsim.net/metar.php?id=' + icao)
+    return r.data
+
 @app.route("/")
 def index():
     return "Welcome to the FlyByWire Simulations API v1.0"
@@ -26,7 +41,6 @@ def mreq():
     
     if source == 'vatsim':
         result = fetch_vatsim(icao)
-        return result
         if result == '':
             return ("FBW_ERROR: ICAO not found.", 200, headers)
         else:
@@ -39,22 +53,6 @@ def mreq():
         return (metar, 200, headers)
     else:
         return ('FBW_ERROR: Provide a valid METAR source.', 200, headers)
-
-#@cache.cached(timeout=240, key_prefix='msblob')
-def fetch_ms_blob():
-    r = http.request('GET', 'https://fsxweatherstorage.blob.core.windows.net/fsxweather/metars.bin')
-    return r.data.decode("utf-8").splitlines()
-
-#@cache.memoize(timeout=120, key_prefix='ms')
-def fetch_ms(icao):
-    lines = fetch_ms()
-    return [i for i in lines if icao in i[0:4]]
-
-#@cache.memoize(timeout=120, key_prefix='vatsim')
-def fetch_vatsim(icao):
-    endpoint = 'http://metar.vatsim.net/metar.php?id=' + icao
-    r = http.request('GET', endpoint)
-    return r.data
     
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
