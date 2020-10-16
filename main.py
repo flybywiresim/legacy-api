@@ -39,17 +39,17 @@ def mreq():
     else:
         return ('FBW_ERROR: Provide a valid METAR source.', 200, headers)
 
-@cache.cached(timeout=240, key_prefix='msblob')
+#@cache.cached(timeout=240, key_prefix='msblob')
 def fetch_ms_blob():
     r = http.request('GET', 'https://fsxweatherstorage.blob.core.windows.net/fsxweather/metars.bin')
     return r.data.decode("utf-8").splitlines()
 
-@cache.memoize(timeout=120, key_prefix='ms')
+#@cache.memoize(timeout=120, key_prefix='ms')
 def fetch_ms(icao):
     lines = fetch_ms()
     return [i for i in lines if icao in i[0:4]]
 
-@cache.memoize(timeout=120, key_prefix='vatsim')
+#@cache.memoize(timeout=120, key_prefix='vatsim')
 def fetch_vatsim(icao):
     endpoint = 'http://metar.vatsim.net/metar.php?id=' + icao
     r = http.request('GET', endpoint)
