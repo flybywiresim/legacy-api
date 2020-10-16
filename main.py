@@ -1,6 +1,7 @@
 import json
 import urllib3
 from flask import Flask
+from flask import jsonify
 from flask import request
 from flask_caching import Cache
 
@@ -66,13 +67,15 @@ def atis():
     else:
         return render(FBW_INVALID_ARGS)
     
-    if source == 'pilotedge':
+    if source == 'faa':
+        atis = fetch_faa_atis(icao)
+    elif source == 'pilotedge':
         atis = fetch_pilotedge_atis(icao)
     else:
         return render(FBW_INVALID_SRC)
     
     if atis:
-        return render(atis)
+        return render(jsonify(atis))
     else:
         return render(FBW_INVALID_ICAO)
     
@@ -122,12 +125,28 @@ def fetch_pilotedge(icao):
     return d['metar']
 
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
+def fetch_faa_atis(icao):
+    r = http.request('GET', 'https://datis.clowd.io/api/' + icao)
+    d = json.loads(r.data.decode('utf-8'))
+    if 'error' in d:
+        return None
+    atis = {}
+    for a in d:
+        if 'arr' in a:
+            atis['arr'] = a['datis']
+        elif 'dep' in a:
+            atis['dep'] = a['datis']
+        else:
+            atis['combined'] = a['datis']
+    return atis
+
+@cache.memoize(timeout=MEMOIZE_TIMEOUT)
 def fetch_pilotedge_atis(icao):
     r = http.request('GET', 'https://www.pilotedge.net/atis/' + icao + '.json')
     if len(r.data) < 3:
         return None
     d = json.loads(r.data.decode('utf-8'))
-    return d['text'].replace('\n', ' ')
+    return {"combined": d['text'].replace('\n\n', ' ')}
     
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
