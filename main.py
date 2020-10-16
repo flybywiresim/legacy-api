@@ -7,20 +7,9 @@ app = Flask(__name__)
 cache = Cache(app,config={'CACHE_TYPE': 'simple'})
 http = urllib3.PoolManager()
 
-#@cache.cached(timeout=240, key_prefix='msblob')
-def fetch_ms_blob():
-    r = http.request('GET', 'https://fsxweatherstorage.blob.core.windows.net/fsxweather/metars.bin')
-    return r.data.decode("utf-8").splitlines()
-
-#@cache.memoize(timeout=120, key_prefix='ms')
-def fetch_ms(icao):
-    lines = fetch_ms_blob()
-    return [i for i in lines if icao in i[0:4]]
-
-#@cache.memoize(timeout=120, key_prefix='vatsim')
-def fetch_vatsim(icao):
-    r = http.request('GET', 'http://metar.vatsim.net/metar.php?id=' + icao)
-    return r.data
+#########################################
+########## FLASK API ENDPOINTS ##########
+#########################################
 
 @app.route("/")
 def index():
@@ -53,6 +42,25 @@ def mreq():
         return (metar, 200, headers)
     else:
         return ('FBW_ERROR: Provide a valid METAR source.', 200, headers)
+    
+#########################################
+########### UTILITY FUNCTIONS ###########
+#########################################
+
+@cache.cached(timeout=240, key_prefix='msblob')
+def fetch_ms_blob():
+    r = http.request('GET', 'https://fsxweatherstorage.blob.core.windows.net/fsxweather/metars.bin')
+    return r.data.decode("utf-8").splitlines()
+
+@cache.memoize(timeout=120, key_prefix='ms')
+def fetch_ms(icao):
+    lines = fetch_ms_blob()
+    return [i for i in lines if icao in i[0:4]]
+
+@cache.memoize(timeout=120, key_prefix='vatsim')
+def fetch_vatsim(icao):
+    r = http.request('GET', 'http://metar.vatsim.net/metar.php?id=' + icao)
+    return r.data
     
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
