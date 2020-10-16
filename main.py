@@ -2,6 +2,11 @@ import urllib3
 from flask import Flask
 from flask import request
 from flask_caching import Cache
+import logging
+
+handler = logging.FileHandler('/logs/errors.txt')
+handler.setLevel(logging.ERROR)
+app.logger.addHandler(handler)
 
 cache = Cache()
 app = Flask(__name__)
