@@ -67,7 +67,7 @@ def atis():
         return render(FBW_INVALID_ARGS)
     
     if source == 'pilotedge':
-        atis = fetch_pilotedge(icao)
+        atis = fetch_pilotedge_atis(icao)
     else:
         return render(FBW_INVALID_SRC)
     
