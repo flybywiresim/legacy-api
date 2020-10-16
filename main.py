@@ -34,7 +34,7 @@ http = urllib3.PoolManager()
 
 @app.route("/")
 def index():
-    render(FBW_WELCOME_MSG)
+    return render(FBW_WELCOME_MSG)
 
 @app.route("/metar")
 def mreq():
