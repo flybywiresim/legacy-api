@@ -25,15 +25,15 @@ def mreq():
         return ('FBW_ERROR: Provide source and ICAO arguments.', 200, headers)
     
     if source == 'vatsim':
-        result = fetch_vatsim()
-        if rresult == '':
+        result = fetch_vatsim(icao)
+        if result == '':
             return ("FBW_ERROR: ICAO not found.", 200, headers)
         else:
             return (result, 200, headers) 
     elif source == 'ms':
         try:
-           metar = fetch_ms()[0]
-        except:
+           metar = fetch_ms(icao)[0]
+        except IndexError:
            return ("FBW_ERROR: ICAO not found.", 200, headers)
         return (metar, 200, headers)
     else:
