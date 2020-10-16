@@ -3,6 +3,21 @@ from flask import Flask
 from flask import request
 from flask_caching import Cache
 
+###############################
+########## CONSTANTS ##########
+###############################
+
+CACHE_TIMEOUT = 240
+MEMOIZE_TIMEOUT = 120
+FBW_WELCOME_MSG = "FlyByWire Simulations API v1.0"
+FBW_INVALID_ARGS = 'FBW_ERROR: Provide source and ICAO arguments'
+FBW_INVALID_ICAO = 'FBW_ERROR: ICAO not found'
+FBW_INVALID_SRC = 'FBW_ERROR: Invalid METAR source'
+
+####################################
+########## INITIALIZATION ##########
+####################################
+
 app = Flask(__name__)
 cache = Cache(app,config={'CACHE_TYPE': 'simple'})
 http = urllib3.PoolManager()
@@ -13,51 +28,49 @@ http = urllib3.PoolManager()
 
 @app.route("/")
 def index():
-    return "Welcome to the FlyByWire Simulations API v1.0"
+    render(FBW_WELCOME_MSG)
 
 @app.route("/metar")
 def mreq():
-    headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'no-cache'
-    }
-
     if request.args and 'icao' in request.args and 'source' in request.args:
         icao = request.args.get('icao').upper()
         source = request.args.get('source').lower()
     else:
-        return ('FBW_ERROR: Provide source and ICAO arguments.', 200, headers)
+        return render(FBW_INVALID_ARGS)
     
     if source == 'vatsim':
-        result = fetch_vatsim(icao)
-        if result == '':
-            return ("FBW_ERROR: ICAO not found.", 200, headers)
-        else:
-            return (result, 200, headers) 
+        metar = fetch_vatsim(icao)
     elif source == 'ms':
-        try:
-           metar = fetch_ms(icao)[0]
-        except IndexError:
-           return ("FBW_ERROR: ICAO not found.", 200, headers)
-        return (metar, 200, headers)
+        metar = fetch_ms(icao)
     else:
-        return ('FBW_ERROR: Provide a valid METAR source.', 200, headers)
+        return render(FBW_INVALID_SRC)
+    
+    if metar:
+        return render(metar)
+    else:
+        return render(FBW_INVALID_ICAO)
     
 #########################################
 ########### UTILITY FUNCTIONS ###########
 #########################################
 
-@cache.cached(timeout=240, key_prefix='msblob')
+def render(output):
+    return(output, 200, {
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-cache'
+    })
+
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix='msblob')
 def fetch_ms_blob():
     r = http.request('GET', 'https://fsxweatherstorage.blob.core.windows.net/fsxweather/metars.bin')
     return r.data.decode("utf-8").splitlines()
 
-@cache.memoize(timeout=120)
+@cache.memoize(timeout=MEMOIZE_TIMEOUT)
 def fetch_ms(icao):
     lines = fetch_ms_blob()
     return [i for i in lines if icao in i[0:4]]
 
-@cache.memoize(timeout=120)
+@cache.memoize(timeout=MEMOIZE_TIMEOUT)
 def fetch_vatsim(icao):
     r = http.request('GET', 'http://metar.vatsim.net/metar.php?id=' + icao)
     return r.data
