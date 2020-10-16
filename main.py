@@ -52,12 +52,12 @@ def fetch_ms_blob():
     r = http.request('GET', 'https://fsxweatherstorage.blob.core.windows.net/fsxweather/metars.bin')
     return r.data.decode("utf-8").splitlines()
 
-@cache.memoize(timeout=120, key_prefix='ms')
+@cache.memoize(timeout=120)
 def fetch_ms(icao):
     lines = fetch_ms_blob()
     return [i for i in lines if icao in i[0:4]]
 
-@cache.memoize(timeout=120, key_prefix='vatsim')
+@cache.memoize(timeout=120)
 def fetch_vatsim(icao):
     r = http.request('GET', 'http://metar.vatsim.net/metar.php?id=' + icao)
     return r.data
