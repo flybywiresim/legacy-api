@@ -68,7 +68,8 @@ def fetch_ms_blob():
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
 def fetch_ms(icao):
     lines = fetch_ms_blob()
-    return [i for i in lines if icao in i[0:4]]
+    result = [i for i in lines if icao in i[0:4]]
+    return result[0] if result else None
 
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
 def fetch_vatsim(icao):
