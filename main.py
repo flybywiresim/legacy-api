@@ -1,3 +1,4 @@
+import json
 import urllib3
 from flask import Flask
 from flask import request
@@ -33,6 +34,49 @@ http = urllib3.PoolManager()
 def index():
     return render(FBW_WELCOME_MSG)
 
+1
+
+import urllib3
+
+2
+
+from flask import Flask
+
+3
+
+from flask import request
+
+4
+
+from flask_caching import Cache
+
+5
+
+​
+
+6
+
+###############################
+
+7
+
+########## CONSTANTS ##########
+
+8
+
+###############################
+
+9
+
+​
+
+10
+
+CACHE_TIMEOUT = 240
+
+11
+
+MEMOIZE_TIMEOUT = 120
 @app.route("/metar")
 def mreq():
     if request.args and 'icao' in request.args and 'source' in request.args:
@@ -45,6 +89,8 @@ def mreq():
         metar = fetch_vatsim(icao)
     elif source == 'ms':
         metar = fetch_ms(icao)
+    elif source == 'pilotedge':
+        metar = fetch_pilotedge(icao)
     else:
         return render(FBW_INVALID_SRC)
     
@@ -78,6 +124,14 @@ def fetch_ms(icao):
 def fetch_vatsim(icao):
     r = http.request('GET', 'http://metar.vatsim.net/metar.php?id=' + icao)
     return r.data
+
+@cache.memoize(timeout=MEMOIZE_TIMEOUT)
+def fetch_pilotedge(icao):
+    r = http.request('GET', 'https://www.pilotedge.net/atis/' + icao + '.json')
+    if not r.data:
+        return None
+    d = json.loads(r.data.decode('utf-8'))
+    return d['metar']
     
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
