@@ -15,6 +15,7 @@ FBW_WELCOME_MSG = "FlyByWire Simulations API v1.0"
 FBW_INVALID_ARGS = 'FBW_ERROR: Provide source and ICAO arguments'
 FBW_INVALID_ICAO = 'FBW_ERROR: ICAO not found'
 FBW_INVALID_SRC = 'FBW_ERROR: Invalid source'
+FBW_NO_DATIS = 'FBW_ERROR: D-ATIS not available at this airport'
 
 ####################################
 ########## INITIALIZATION ##########
@@ -47,10 +48,10 @@ def metar():
         metar = fetch_vatsim(icao)
     elif source == 'ms':
         metar = fetch_ms(icao)
-    elif source == 'pilotedge':
-        metar = fetch_pilotedge(icao)
     elif source == 'ivao':
         metar = fetch_ivao(icao)
+    elif source == 'pilotedge':
+        metar = fetch_pilotedge(icao)
     else:
         return render(FBW_INVALID_SRC)
     
@@ -71,15 +72,17 @@ def atis():
         atis = fetch_faa_atis(icao)
     elif source == 'vatsim':
         atis = fetch_vatsim_atis(icao)
+    elif source == 'ivao':
+        atis = fetch_ivao_atis(icao)
     elif source == 'pilotedge':
-        atis = fetch_pilotedge_atis(icao)
+        atis = fetch_pilotedge_atis(icao)       
     else:
         return render(FBW_INVALID_SRC)
     
     if atis:
         return render(jsonify(atis))
     else:
-        return render(FBW_INVALID_ICAO)
+        return render(FBW_NO_DATIS)
     
 #########################################
 ########### UTILITY FUNCTIONS ###########
@@ -104,6 +107,11 @@ def fetch_vatsim_blob():
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix='ivaoblob')
 def fetch_ivao_blob():
     r = http.request('GET', 'http://wx.ivao.aero/metar.php')
+    return r.data.decode("utf-8").splitlines()
+
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix='ivaowhazzupblob')
+def fetch_ivao_whazzup_blob():
+    r = http.request('GET', 'https://api.ivao.aero/getdata/whazzup/whazzup.txt')
     return r.data.decode("utf-8").splitlines()
 
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
@@ -155,6 +163,16 @@ def fetch_vatsim_atis(icao):
     atis = [i for i in clients if i['callsign'] == target and i['atis_message'] is not None]
     return {"combined": atis[0]['atis_message'].replace('^§', ' ')} if atis else None
 
+@cache.memoize(timeout=MEMOIZE_TIMEOUT)
+def fetch_ivao_atis(icao):
+    lines = fetch_ivao_whazzup_blob()
+    target = icao + '_TWR'
+    result = [i for i in lines if target in i[0:8]]
+    if not result or result[35] == '':
+        return None
+    atis = result[35].split['^§'][1:].join('').replace('^§', ' ')
+    return {"combined": atis}
+    
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
 def fetch_pilotedge_atis(icao):
     r = http.request('GET', 'https://www.pilotedge.net/atis/' + icao + '.json')
