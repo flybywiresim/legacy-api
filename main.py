@@ -151,9 +151,9 @@ def fetch_faa_atis(icao):
 def fetch_vatsim_atis(icao):
     vdata = fetch_vatsim_blob()
     clients = vdata['clients']
-    atis = [i for i in clients if i['clienttype'] == 'ATC' and i['atis_message'] is not None]
-    result = [i for i in atis if icao in i['callsign']]
-    return {"combined": result[0]['atis_message']} if result else None
+    target = icao + '_ATIS'
+    atis = [i for i in clients if i['callsign'] == target and i['atis_message'] is not None]
+    return {"combined": atis[0]['atis_message']} if atis else None
 
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
 def fetch_pilotedge_atis(icao):
