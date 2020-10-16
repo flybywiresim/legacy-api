@@ -13,7 +13,7 @@ MEMOIZE_TIMEOUT = 120
 FBW_WELCOME_MSG = "FlyByWire Simulations API v1.0"
 FBW_INVALID_ARGS = 'FBW_ERROR: Provide source and ICAO arguments'
 FBW_INVALID_ICAO = 'FBW_ERROR: ICAO not found'
-FBW_INVALID_SRC = 'FBW_ERROR: Invalid METAR source'
+FBW_INVALID_SRC = 'FBW_ERROR: Invalid source'
 
 ####################################
 ########## INITIALIZATION ##########
@@ -35,7 +35,7 @@ def index():
     return render(FBW_WELCOME_MSG)
 
 @app.route("/metar")
-def mreq():
+def metar():
     if request.args and 'icao' in request.args and 'source' in request.args:
         icao = request.args.get('icao').upper()
         source = request.args.get('source').lower()
@@ -55,6 +55,24 @@ def mreq():
     
     if metar:
         return render(metar)
+    else:
+        return render(FBW_INVALID_ICAO)
+
+@app.route("/atis")
+def atis():
+    if request.args and 'icao' in request.args and 'source' in request.args:
+        icao = request.args.get('icao').upper()
+        source = request.args.get('source').lower()
+    else:
+        return render(FBW_INVALID_ARGS)
+    
+    if source == 'pilotedge':
+        atis = fetch_pilotedge(icao)
+    else:
+        return render(FBW_INVALID_SRC)
+    
+    if atis:
+        return render(atis)
     else:
         return render(FBW_INVALID_ICAO)
     
@@ -102,6 +120,14 @@ def fetch_pilotedge(icao):
         return None
     d = json.loads(r.data.decode('utf-8'))
     return d['metar']
+
+@cache.memoize(timeout=MEMOIZE_TIMEOUT)
+def fetch_pilotedge_atis(icao):
+    r = http.request('GET', 'https://www.pilotedge.net/atis/' + icao + '.json')
+    if len(r.data) < 3:
+        return None
+    d = json.loads(r.data.decode('utf-8'))
+    return d['text'].replace('\n', '')
     
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
