@@ -168,7 +168,7 @@ def fetch_ivao_atis(icao):
     lines = fetch_ivao_whazzup_blob()
     target = icao + '_TWR'
     result = [i for i in lines if target in i[0:8]]
-    atis = result.split(':')[35]
+    atis = result[0].split(':')[35]
     if not result or atis == '':
         return None
     atis_msg = atis.split['^§'][1:].join('').replace('^§', ' ')
