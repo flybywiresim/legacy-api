@@ -1,17 +1,10 @@
 import urllib3
 from flask import Flask
 from flask import request
-from flask_caching import Cache
-import logging
+from flask.ext.cache import Cache
 
-handler = logging.FileHandler('/logs/errors.txt')
-handler.setLevel(logging.ERROR)
-app.logger.addHandler(handler)
-
-cache = Cache()
 app = Flask(__name__)
-cache.init_app(app)
-app.config['CACHE_TYPE'] = 'filesystem'
+cache = Cache(app,config={'CACHE_TYPE': 'simple'})
 
 @app.route("/")
 def index():
@@ -62,4 +55,4 @@ def fetch_vatsim(icao):
     return r.data
     
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0')
