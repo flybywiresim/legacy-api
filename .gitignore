@@ -1,3 +1,6 @@
+# Filesystem Cache
+api_cache/
+
 # Environments
 .env
 .venv
