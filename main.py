@@ -69,6 +69,8 @@ def atis():
     
     if source == 'faa':
         atis = fetch_faa_atis(icao)
+    elif source == 'vatsim':
+        atis = fetch_vatsim_atis(icao)
     elif source == 'pilotedge':
         atis = fetch_pilotedge_atis(icao)
     else:
@@ -93,6 +95,11 @@ def render(output):
 def fetch_ms_blob():
     r = http.request('GET', 'https://fsxweatherstorage.blob.core.windows.net/fsxweather/metars.bin')
     return r.data.decode("utf-8").splitlines()
+
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix='vatblob')
+def fetch_vatsim_blob():
+    r = http.request('GET', 'http://cluster.data.vatsim.net/vatsim-data.json')
+    return json.loads(r.data.decode('utf-8'))
 
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix='ivaoblob')
 def fetch_ivao_blob():
@@ -139,6 +146,14 @@ def fetch_faa_atis(icao):
         else:
             atis['combined'] = a['datis']
     return atis
+
+@cache.memoize(timeout=MEMOIZE_TIMEOUT)
+def fetch_vatsim_atis(icao):
+    vdata = fetch_vatsim_blob()
+    clients = vdata['clients']
+    atis = [i for i in clients if i['clienttype'] == 'ATC' and i['atis_message'] is not None]
+    result = [i for i in atis if icao in i['callsign']]
+    return {"combined": result[0]['atis_message']} if result else None
 
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
 def fetch_pilotedge_atis(icao):
