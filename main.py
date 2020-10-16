@@ -170,7 +170,7 @@ def fetch_ivao_atis(icao):
     result = [i for i in lines if target in i[0:8]]
     if not result or result[35] == '':
         return None
-    atis = result[35].split['^§'][1:].join('').replace('^§', ' ')
+    atis = result.split(':')[35].split['^§'][1:].join('').replace('^§', ' ')
     return {"combined": atis}
     
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
