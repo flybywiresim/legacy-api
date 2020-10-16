@@ -112,7 +112,7 @@ def fetch_ivao_blob():
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix='ivaowhazzupblob')
 def fetch_ivao_whazzup_blob():
     r = http.request('GET', 'https://api.ivao.aero/getdata/whazzup/whazzup.txt')
-    return r.data.decode("utf-8").splitlines()
+    return r.data.decode("ISO-8859-1").splitlines()
 
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
 def fetch_ms(icao):
