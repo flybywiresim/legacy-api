@@ -1,3 +1,6 @@
+# Database
+db.sqlite
+
 # Filesystem Cache
 api_cache/
 
