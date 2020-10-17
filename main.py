@@ -111,10 +111,13 @@ def add_txcxn():
     latlong = request.args.get('latlong')
     ip_addr = str(request.remote_addr)
 
+    existing_flight = TxCxn.query.filter_by(flight=flight).first()
+    if existing_flight:
+        return render(jsonify({"error": "flight_in_use"}))
+
     new_txcxn = TxCxn(flight, ip_addr, latlong)
     db.session.add(new_txcxn)
     db.session.commit()
-
     return render(TxCxn_schema.jsonify(new_txcxn))
 
 @app.route('/txcxn/<id>', methods=['PUT'])
@@ -125,7 +128,7 @@ def update_txcxn(id):
     ip_addr = str(request.remote_addr)
 
     if ip_addr != txcxn.ip_addr:
-        return render(jsonify({"error": "Invalid IP to update flight"}))
+        return render(jsonify({"error": "ip_address_changed"}))
 
     txcxn.latlong = latlong
     txcxn.last_contact = datetime.datetime.now()
@@ -166,7 +169,6 @@ def add_txmsg():
     new_txmsg = TxMsg(m_to, m_from, message)
     db.session.add(new_txmsg)
     db.session.commit()
-
     return render(TxMsg_schema.jsonify(new_txmsg))
 
 @app.route('/txmsg/<id>', methods=['DELETE'])
