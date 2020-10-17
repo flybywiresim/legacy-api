@@ -92,10 +92,10 @@ class TxMsgSchema(ma.Schema):
     class Meta:
         fields = ('id', 'm_to', 'm_from', 'message', 'timestamp')
 
-TxCxn_schema = TxCxnSchema(strict=True)
-TxCxns_schema = TxCxnSchema(many=True, strict=True)
-TxMsg_schema = TxMsgSchema(strict=True)
-TxMsgs_schema = TxMsgSchema(many=True, strict=True)
+TxCxn_schema = TxCxnSchema()
+TxCxns_schema = TxCxnSchema(many=True)
+TxMsg_schema = TxMsgSchema()
+TxMsgs_schema = TxMsgSchema(many=True)
 
 #######################################
 ########## TELEX CONNECTIONS ##########
