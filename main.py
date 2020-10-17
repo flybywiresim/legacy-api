@@ -64,7 +64,7 @@ ma = Marshmallow(app)
 class TxCxn(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     flight = db.Column(db.String(24))
-    ip_addr = db.Column(IPAddressType)
+    ip_addr = db.Column(db.String(46))
     latlong = db.Column(db.String(50))
     last_contact = db.Column(db.DateTime, server_default=db.func.now(), server_onupdate=db.func.now())
 
@@ -106,7 +106,7 @@ TxMsgs_schema = TxMsgSchema(many=True)
 def add_txcxn():
     flight = request.args.get('flight')
     latlong = request.args.get('latlong')
-    ip_addr = request.remote_addr
+    ip_addr = str(request.remote_addr)
 
     new_txcxn = TxCxn(flight, ip_addr, latlong)
     db.session.add(new_txcxn)
@@ -119,7 +119,7 @@ def update_txcxn(id):
     txcxn = TxCxn.query.get(id)
 
     latlong = request.args.get('latlong')
-    ip_addr = request.remote_addr
+    ip_addr = str(request.remote_addr)
 
     if ip_addr != txcxn.ip_addr:
         return render(jsonify({"error": "Invalid IP to update flight"}))
