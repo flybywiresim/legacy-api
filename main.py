@@ -153,8 +153,8 @@ def add_txmsg():
     message = request.args.get('message')
     
     curr_ip_addr = request.remote_addr
-    sender_cxn = TxCxn.query.filter_by(flight=txmsg.m_from).first()
-    recipient_cxn = TxCxn.query.filter_by(flight=txmsg.m_to).first()
+    sender_cxn = TxCxn.query.filter_by(flight=m_from).first()
+    recipient_cxn = TxCxn.query.filter_by(flight=m_to).first()
 
     if not recipient_cxn:
         return render(jsonify({"error": "recipient_not_found"}))
