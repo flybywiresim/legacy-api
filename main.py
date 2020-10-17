@@ -1,9 +1,16 @@
+import os
 import json
+import atexit
 import urllib3
+import datetime
 from flask import Flask
 from flask import jsonify
 from flask import request
 from flask_caching import Cache
+from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
+from sqlalchemy_utils import IPAddressType
+from apscheduler.schedulers.background import BackgroundScheduler
 
 ###############################
 ########## CONSTANTS ##########
@@ -27,6 +34,148 @@ cache = Cache(app, config={
     'CACHE_DIR': './api_cache'
 })
 http = urllib3.PoolManager()
+
+def cleanup_telex():
+    cutoff = datetime.datetime.now() - datetime.timedelta(minutes=6)
+    filtered_txcxns = TxCxn.query.filter(TxCxn.last_contact < cutoff)
+    for c in filtered_txcxns:
+        filtered_msgs = TxMsg.query.filter(TxMsg.m_to == c.flight)
+        for m in filtered_msgs:
+            db.session.delete(m)
+        db.session.delete(c)
+    print("cleanup_telex() has been run")
+    db.session.commit()
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=cleanup_telex, trigger="interval", seconds=360)
+scheduler.start()
+
+###################################
+########## INITIALIZE DB ##########
+###################################
+
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'db.sqlite')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+ma = Marshmallow(app)
+
+class TxCxn(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    flight = db.Column(db.String(24))
+    ip_addr = db.Column(IPAddressType)
+    latlong = db.Column(db.String(50))
+    last_contact = db.Column(db.DateTime, server_default=db.func.now(), server_onupdate=db.func.now())
+
+    def __init__(self, flight, ip_addr, latlong):
+        self.flight = flight
+        self.ip_addr = ip_addr
+        self.latlong = latlong
+
+class TxCxnSchema(ma.Schema):
+    class Meta:
+        fields = ('id', 'flight', 'ip_addr', 'latlong', 'last_contact')
+
+class TxMsg(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    m_to = db.Column(db.String(24))
+    m_from = db.Column(db.String(24))
+    message = db.Column(db.String(100))
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
+
+    def __init__(self, m_to, m_from, message):
+        self.m_to = m_to
+        self.m_from = m_from
+        self.message = message
+
+class TxMsgSchema(ma.Schema):
+    class Meta:
+        fields = ('id', 'm_to', 'm_from', 'message', 'timestamp')
+
+TxCxn_schema = TxCxnSchema(strict=True)
+TxCxns_schema = TxCxnSchema(many=True, strict=True)
+TxMsg_schema = TxMsgSchema(strict=True)
+TxMsgs_schema = TxMsgSchema(many=True, strict=True)
+
+#######################################
+########## TELEX CONNECTIONS ##########
+#######################################
+
+@app.route('/txcxn', methods=['POST'])
+def add_txcxn():
+    flight = request.json['flight']
+    latlong = request.json['latlong']
+    ip_addr = request.remote_addr
+
+    new_txcxn = TxCxn(flight, ip_addr, latlong)
+    db.session.add(new_txcxn)
+    db.session.commit()
+
+    return render(TxCxn_schema.jsonify(new_txcxn))
+
+@app.route('/txcxn/<id>', methods=['PUT'])
+def update_txcxn():
+    txcxn = TxCxn.query.get(id)
+
+    latlong = request.json['latlong']
+    ip_addr = request.remote_addr
+
+    if ip_addr != txcxn.ip_addr:
+        return render(jsonify({"error": "Invalid IP to update flight"})
+    
+    txcxn.latlong = latlong
+    db.session.commit()
+    return render(TxCxn_schema.jsonify(txcxn))
+
+@app.route('/txcxn', methods=['GET'])
+def get_txcxns():
+    all_txcxns = TxCxn.query.all()
+    result = TxCxns_schema.dump(all_txcxns)
+    return render(jsonify(result.data))
+
+@app.route('/txcxn/<id>', methods=['GET'])
+def get_txcxn(id):
+    txcxn = TxCxn.query.get(id)
+    return render(TxCxn_schema.jsonify(txcxn))
+
+####################################
+########## TELEX MESSAGES ##########
+####################################
+
+@app.route('/txmsg', methods=['POST'])
+def add_txmsg():
+    m_to = request.json['to']
+    m_from = request.json['from']
+    message = request.json['message']
+
+    new_txmsg = TxMsg(m_to, m_from, message)
+    db.session.add(new_txmsg)
+    db.session.commit()
+
+    return render(TxMsg_schema.jsonify(new_txmsg))
+
+@app.route('/txmsg/<id>', methods=['DELETE'])
+def delete_txmsg(id):
+    txmsg = TxMsg.query.get(id)
+    curr_ip_addr = request.remote_addr
+    recipient_cxn = TxCxn.query.filter_by(flight=txmsg.m_to).first()
+
+    if recipient_cxn and recipient_cxn.ip_addr == curr_ip_addr:
+        db.session.delete(txmsg)
+        db.session.commit()
+        return render(jsonify({"deleted": True}))
+    return render(jsonify({"deleted": False}))
+
+@app.route('/txmsg', methods=['GET'])
+def get_txmsgs():
+    all_txmsgs = TxMsg.query.all()
+    result = TxMsgs_schema.dump(all_txmsgs)
+    return render(jsonify(result.data))
+
+@app.route('/txmsg/<id>', methods=['GET'])
+def get_txmsg(id):
+    txmsg = TxMsg.query.get(id)
+    return render(TxMsg_schema.jsonify(txmsg))
 
 #########################################
 ########## FLASK API ENDPOINTS ##########
@@ -185,6 +334,8 @@ def fetch_pilotedge_atis(icao):
         return None
     d = json.loads(r.data.decode('utf-8'))
     return {"combined": d['text'].replace('\n\n', ' ')}
+
+atexit.register(lambda: scheduler.shutdown())
     
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
