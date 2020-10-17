@@ -103,8 +103,8 @@ TxMsgs_schema = TxMsgSchema(many=True)
 
 @app.route('/txcxn', methods=['POST'])
 def add_txcxn():
-    flight = request.json['flight']
-    latlong = request.json['latlong']
+    flight = request.args.get('flight')
+    latlong = request.args.get('latlong')
     ip_addr = request.remote_addr
 
     new_txcxn = TxCxn(flight, ip_addr, latlong)
@@ -117,7 +117,7 @@ def add_txcxn():
 def update_txcxn(id):
     txcxn = TxCxn.query.get(id)
 
-    latlong = request.json['latlong']
+    latlong = request.args.get('latlong')
     ip_addr = request.remote_addr
 
     if ip_addr != txcxn.ip_addr:
@@ -144,9 +144,9 @@ def get_txcxn(id):
 
 @app.route('/txmsg', methods=['POST'])
 def add_txmsg():
-    m_to = request.json['to']
-    m_from = request.json['from']
-    message = request.json['message']
+    m_to = request.args.get('to')
+    m_from = request.args.get('from')
+    message = request.args.get('message')
 
     new_txmsg = TxMsg(m_to, m_from, message)
     db.session.add(new_txmsg)
