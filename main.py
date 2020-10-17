@@ -114,7 +114,7 @@ def add_txcxn():
     return render(TxCxn_schema.jsonify(new_txcxn))
 
 @app.route('/txcxn/<id>', methods=['PUT'])
-def update_txcxn():
+def update_txcxn(id):
     txcxn = TxCxn.query.get(id)
 
     latlong = request.json['latlong']
