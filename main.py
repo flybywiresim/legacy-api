@@ -68,13 +68,15 @@ class TxCxn(db.Model):
     latlong = db.Column(db.String(50))
     last_contact = db.Column(db.DateTime, server_default=db.func.now(), server_onupdate=db.func.now())
 
-    def __init__(self, flight, ip_addr, latlong):
+    def __init__(self, flight, ip_addr, latlong, last_contact=datetime.datetime.now()):
         self.flight = flight
         self.ip_addr = ip_addr
         self.latlong = latlong
+        self.last_contact = last_contact
 
 class TxCxnSchema(ma.Schema):
     class Meta:
+        # fields = ('id', 'flight', 'ip_addr', 'latlong', 'last_contact')
         fields = ('id', 'flight', 'ip_addr', 'latlong', 'last_contact')
 
 class TxMsg(db.Model):
@@ -125,6 +127,7 @@ def update_txcxn(id):
         return render(jsonify({"error": "Invalid IP to update flight"}))
 
     txcxn.latlong = latlong
+    txcxn.last_contact = datetime.datetime.now()
     db.session.commit()
     return render(TxCxn_schema.jsonify(txcxn))
 
