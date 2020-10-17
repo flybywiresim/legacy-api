@@ -151,6 +151,16 @@ def add_txmsg():
     m_to = request.args.get('to')
     m_from = request.args.get('from')
     message = request.args.get('message')
+    
+    curr_ip_addr = request.remote_addr
+    sender_cxn = TxCxn.query.filter_by(flight=txmsg.m_from).first()
+    recipient_cxn = TxCxn.query.filter_by(flight=txmsg.m_to).first()
+
+    if not recipient_cxn:
+        return render(jsonify({"error": "recipient_not_found"}))
+    
+    if not sender_cxn or sender_cxn.ip_addr != curr_ip_addr:
+        return render(jsonify({"error": "sender_permissions_error"}))
 
     new_txmsg = TxMsg(m_to, m_from, message)
     db.session.add(new_txmsg)
