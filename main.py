@@ -121,8 +121,8 @@ def update_txcxn(id):
     ip_addr = request.remote_addr
 
     if ip_addr != txcxn.ip_addr:
-        return render(jsonify({"error": "Invalid IP to update flight"})
-    
+        return render(jsonify({"error": "Invalid IP to update flight"}))
+
     txcxn.latlong = latlong
     db.session.commit()
     return render(TxCxn_schema.jsonify(txcxn))
