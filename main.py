@@ -131,7 +131,7 @@ def update_txcxn(id):
 def get_txcxns():
     all_txcxns = TxCxn.query.all()
     result = TxCxns_schema.dump(all_txcxns)
-    return render(jsonify(result.data))
+    return render(jsonify(result))
 
 @app.route('/txcxn/<id>', methods=['GET'])
 def get_txcxn(id):
@@ -170,7 +170,7 @@ def delete_txmsg(id):
 def get_txmsgs():
     all_txmsgs = TxMsg.query.all()
     result = TxMsgs_schema.dump(all_txmsgs)
-    return render(jsonify(result.data))
+    return render(jsonify(result))
 
 @app.route('/txmsg/<id>', methods=['GET'])
 def get_txmsg(id):
