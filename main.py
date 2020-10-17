@@ -77,7 +77,7 @@ class TxCxn(db.Model):
 class TxCxnSchema(ma.Schema):
     class Meta:
         # fields = ('id', 'flight', 'ip_addr', 'latlong', 'last_contact')
-        fields = ('id', 'flight', 'ip_addr', 'latlong', 'last_contact')
+        fields = ('id', 'flight', 'latlong', 'last_contact')
 
 class TxMsg(db.Model):
     id = db.Column(db.Integer, primary_key=True)
