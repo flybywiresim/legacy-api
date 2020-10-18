@@ -13,6 +13,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from sqlalchemy_utils import IPAddressType
 from apscheduler.schedulers.background import BackgroundScheduler
+from xml.etree import ElementTree
 
 ###############################
 ########## CONSTANTS ##########
@@ -232,7 +233,7 @@ def metar():
     elif source == 'ms':
         metar = fetch_ms(icao)
     elif source == 'ivao':
-        metar = fetch_ivao(icao)
+        metar = fetch_ivao_metar(icao)
     elif source == 'pilotedge':
         metar = fetch_pilotedge(icao)
     else:
@@ -266,6 +267,26 @@ def atis():
         return render(jsonify(atis))
     else:
         return render(FBW_NO_DATIS)
+
+@app.route("/taf")
+def taf():
+    if request.args and 'icao' in request.args and 'source' in request.args:
+        icao = request.args.get('icao').upper()
+        source = request.args.get('source').lower()
+    else:
+        return render(FBW_INVALID_ARGS)
+
+    if source == "aviationweather":
+        taf = fetch_aviationweather_taf(icao)
+    elif source == "ivao":
+        taf = fetch_ivao_taf(icao)
+    else:
+        return render(FBW_INVALID_SRC)
+
+    if taf:
+        return render(taf)
+    else:
+        return render(FBW_NO_DATIS)
     
 #########################################
 ########### UTILITY FUNCTIONS ###########
@@ -287,9 +308,14 @@ def fetch_vatsim_blob():
     r = http.request('GET', 'http://cluster.data.vatsim.net/vatsim-data.json')
     return json.loads(r.data.decode('utf-8'))
 
-@cache.cached(timeout=CACHE_TIMEOUT, key_prefix='ivaoblob')
-def fetch_ivao_blob():
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix='ivaometarblob')
+def fetch_ivao_metar_blob():
     r = http.request('GET', 'http://wx.ivao.aero/metar.php')
+    return r.data.decode("utf-8").splitlines()
+
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix='ivaotafblob')
+def fetch_ivao_taf_blob():
+    r = http.request('GET', 'http://wx.ivao.aero/taf.php')
     return r.data.decode("utf-8").splitlines()
 
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix='ivaowhazzupblob')
@@ -309,8 +335,8 @@ def fetch_vatsim(icao):
     return r.data
 
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
-def fetch_ivao(icao):
-    lines = fetch_ivao_blob()
+def fetch_ivao_metar(icao):
+    lines = fetch_ivao_metar_blob()
     result = [i for i in lines if icao in i[0:4]]
     return result[0] if result else None
 
@@ -368,6 +394,22 @@ def fetch_pilotedge_atis(icao):
         return None
     d = json.loads(r.data.decode('utf-8'))
     return {"combined": d['text'].replace('\n\n', ' ')}
+
+@cache.memoize(timeout=MEMOIZE_TIMEOUT)
+def fetch_aviationweather_taf(icao):
+    r = http.request('GET', f'https://www.aviationweather.gov/adds/dataserver_current/httpparam?dataSource=tafs&requestType=retrieve&format=xml&stationString={icao}&hoursBeforeNow=0') # maybe can customize the hours?
+    d = ElementTree.fromstring((r.data.decode('utf-8')))
+    if not d.find('data').find("TAF").find("raw_text").text:
+       return None
+    taf = d.find('data').find("TAF").find("raw_text").text
+    return taf
+
+@cache.memoize(timeout=MEMOIZE_TIMEOUT)
+def fetch_ivao_taf(icao):
+    lines = fetch_ivao_taf_blob()
+    result = [i for i in lines if icao in i[0:4]]
+    return result[0] if result else None
+    
 
 atexit.register(lambda: scheduler.shutdown())
     
