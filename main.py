@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import atexit
 import urllib3
@@ -157,6 +158,12 @@ def add_txmsg():
     m_to = request.args.get('to')
     m_from = request.args.get('from')
     message = request.args.get('message')
+
+    message = re.sub(r'([^A-Z0-9/ +-\.])+', '', message)
+    filtered = re.sub(r'\W+', '', message)
+    pattern = re.compile(r'(N(I|1)GG(AH|ER|A|UH|4H|4)(S|Z)?|F(A|4)GG(E|I|O|0|1)TS?|F(A|4)GS?|F(A|4)GGY|B(E|3)(A|4)N(E|3)RS?|SP(I|1)CK?S?|W(E|3)TB(A|4)CKS?|G(O|0)(O|0)KS?|CH(I|1)NK(S|Y)?|SLUTS?|WH(O|0)RES?|TR(A|4)NN(Y|IE)S?)')
+    if pattern.match(filtered):
+        return render(jsonify({"error": "prohibited_regex_hit"}))
     
     curr_ip_addr = request.remote_addr
     sender_cxn = TxCxn.query.filter_by(flight=m_from).first()
