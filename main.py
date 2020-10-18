@@ -77,7 +77,6 @@ class TxCxn(db.Model):
 
 class TxCxnSchema(ma.Schema):
     class Meta:
-        # fields = ('id', 'flight', 'ip_addr', 'latlong', 'last_contact')
         fields = ('id', 'flight', 'latlong', 'last_contact')
 
 class TxMsg(db.Model):
@@ -110,12 +109,13 @@ def add_txcxn():
     flight = request.args.get('flight')
     latlong = request.args.get('latlong')
     ip_addr = str(request.remote_addr)
+    last_contact = datetime.datetime.now()
 
     existing_flight = TxCxn.query.filter_by(flight=flight).first()
-    if existing_flight:
+    if existing_flight or flight == "":
         return render(jsonify({"error": "flight_in_use"}))
 
-    new_txcxn = TxCxn(flight, ip_addr, latlong)
+    new_txcxn = TxCxn(flight, ip_addr, latlong, last_contact)
     db.session.add(new_txcxn)
     db.session.commit()
     return render(TxCxn_schema.jsonify(new_txcxn))
@@ -191,6 +191,12 @@ def delete_txmsg(id):
 def get_txmsgs():
     all_txmsgs = TxMsg.query.all()
     result = TxMsgs_schema.dump(all_txmsgs)
+    return render(jsonify(result))
+
+@app.route('/txmsg/msgto/<id>', methods=['GET'])
+def get_filtered_txmsgs(id):
+    filtered_txmsgs = TxMsg.query.filter_by(m_to=id)
+    result = TxMsgs_schema.dump(filtered_txmsgs)
     return render(jsonify(result))
 
 @app.route('/txmsg/<id>', methods=['GET'])
