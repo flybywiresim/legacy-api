@@ -120,14 +120,16 @@ def add_txcxn():
     db.session.commit()
     return render(TxCxn_schema.jsonify(new_txcxn))
 
-@app.route('/txcxn/<id>', methods=['PUT'])
+# Fake PUT request (fuck CORS)
+@app.route('/txcxn/<id>', methods=['POST'])
 def update_txcxn(id):
     txcxn = TxCxn.query.get(id)
 
     latlong = request.args.get('latlong')
     ip_addr = str(request.remote_addr)
+    update = request.args.get('update')
 
-    if ip_addr != txcxn.ip_addr:
+    if ip_addr != txcxn.ip_addr or update != "yes":
         return render(jsonify({"error": "ip_address_changed"}))
 
     txcxn.latlong = latlong
@@ -171,13 +173,15 @@ def add_txmsg():
     db.session.commit()
     return render(TxMsg_schema.jsonify(new_txmsg))
 
-@app.route('/txmsg/<id>', methods=['DELETE'])
+# Fake DELETE request (fuck CORS)
+@app.route('/txmsg/<id>', methods=['POST'])
 def delete_txmsg(id):
     txmsg = TxMsg.query.get(id)
     curr_ip_addr = request.remote_addr
+    deleteThis = request.args.get('delete')
     recipient_cxn = TxCxn.query.filter_by(flight=txmsg.m_to).first()
 
-    if recipient_cxn and recipient_cxn.ip_addr == curr_ip_addr:
+    if recipient_cxn and recipient_cxn.ip_addr == curr_ip_addr and deleteThis == "yes":
         db.session.delete(txmsg)
         db.session.commit()
         return render(jsonify({"deleted": True}))
