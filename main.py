@@ -26,6 +26,7 @@ FBW_INVALID_ARGS = 'FBW_ERROR: Provide source and ICAO arguments'
 FBW_INVALID_ICAO = 'FBW_ERROR: ICAO not found'
 FBW_INVALID_SRC = 'FBW_ERROR: Invalid source'
 FBW_NO_DATIS = 'FBW_ERROR: D-ATIS not available at this airport'
+FBW_NO_TAF = 'FBW_ERROR: TAF not available at this airport'
 
 AVIATIONWEATHER_TAF_URL = 'https://www.aviationweather.gov/adds/dataserver_current/httpparam?dataSource=tafs&requestType=retrieve&format=xml&stationString=%s&hoursBeforeNow=0'
 IVAO_TAF_URL = 'http://wx.ivao.aero/taf.php'
@@ -289,7 +290,7 @@ def taf():
     if taf:
         return render(taf)
     else:
-        return render(FBW_NO_DATIS)
+        return render(FBW_NO_TAF)
     
 #########################################
 ########### UTILITY FUNCTIONS ###########
