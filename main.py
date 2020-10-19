@@ -316,7 +316,7 @@ def fetch_ivao_metar_blob():
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix='ivaotafblob')
 def fetch_ivao_taf_blob():
     r = http.request('GET', 'http://wx.ivao.aero/taf.php')
-    return r.data.decode("utf-8").splitlines()
+    return r.data.decode("ISO-8859-1").splitlines()
 
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix='ivaowhazzupblob')
 def fetch_ivao_whazzup_blob():
