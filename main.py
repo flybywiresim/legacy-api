@@ -27,6 +27,9 @@ FBW_INVALID_ICAO = 'FBW_ERROR: ICAO not found'
 FBW_INVALID_SRC = 'FBW_ERROR: Invalid source'
 FBW_NO_DATIS = 'FBW_ERROR: D-ATIS not available at this airport'
 
+AVIATIONWEATHER_TAF_URL = 'https://www.aviationweather.gov/adds/dataserver_current/httpparam?dataSource=tafs&requestType=retrieve&format=xml&stationString=%s&hoursBeforeNow=0'
+IVAO_TAF_URL = 'http://wx.ivao.aero/taf.php'
+
 ####################################
 ########## INITIALIZATION ##########
 ####################################
@@ -315,7 +318,7 @@ def fetch_ivao_metar_blob():
 
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix='ivaotafblob')
 def fetch_ivao_taf_blob():
-    r = http.request('GET', 'http://wx.ivao.aero/taf.php')
+    r = http.request('GET', IVAO_TAF_URL)
     return r.data.decode("ISO-8859-1").splitlines()
 
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix='ivaowhazzupblob')
@@ -397,7 +400,7 @@ def fetch_pilotedge_atis(icao):
 
 @cache.memoize(timeout=MEMOIZE_TIMEOUT)
 def fetch_aviationweather_taf(icao):
-    r = http.request('GET', f'https://www.aviationweather.gov/adds/dataserver_current/httpparam?dataSource=tafs&requestType=retrieve&format=xml&stationString={icao}&hoursBeforeNow=0') # maybe can customize the hours?
+    r = http.request('GET', (AVIATIONWEATHER_TAF_URL % icao))
     d = ElementTree.fromstring((r.data.decode('utf-8')))
     if not d.find('data').find("TAF").find("raw_text").text:
        return None
