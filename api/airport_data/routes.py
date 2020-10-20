@@ -8,7 +8,7 @@ from flask import request
 from xml.etree import ElementTree
 from api import http
 from api import cache
-from api.airport_data import airport_data
+from api.airport_data import airport_data as app
 from utilities import Utilities
 
 ###############################
@@ -32,7 +32,7 @@ render = Utilities.render
 ########## FLASK API ENDPOINTS ##########
 #########################################
 
-@airport_data.route("/metar")
+@app.route("/metar")
 def metar():
     if request.args and 'icao' in request.args and 'source' in request.args:
         icao = request.args.get('icao').upper()
@@ -56,7 +56,7 @@ def metar():
     else:
         return render(FBW_INVALID_ICAO)
 
-@airport_data.route("/atis")
+@app.route("/atis")
 def atis():
     if request.args and 'icao' in request.args and 'source' in request.args:
         icao = request.args.get('icao').upper()
@@ -80,7 +80,7 @@ def atis():
     else:
         return render(FBW_NO_DATIS)
 
-@airport_data.route("/taf")
+@app.route("/taf")
 def taf():
     if request.args and 'icao' in request.args and 'source' in request.args:
         icao = request.args.get('icao').upper()

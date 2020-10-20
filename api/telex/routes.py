@@ -14,7 +14,7 @@ from utilities import Utilities
 from api.telex.models import TxCxn, TxCxnSchema, TxMsg, TxMsgSchema
 from api.telex.models import TxCxn_schema, TxCxns_schema, TxMsg_schema, TxMsgs_schema
 from api import db, ma
-from api.telex import telex
+from api.telex import telex as app
 
 ###############################
 ########## CONSTANTS ##########
@@ -41,7 +41,7 @@ scheduler.start()
 ########## TELEX CONNECTIONS ##########
 #######################################
 
-@telex.route('/txcxn', methods=['POST'])
+@app.route('/txcxn', methods=['POST'])
 def add_txcxn():
     flight = request.args.get('flight')
     latlong = request.args.get('latlong')
@@ -58,7 +58,7 @@ def add_txcxn():
     return render(TxCxn_schema.jsonify(new_txcxn))
 
 # Fake PUT request (fuck CORS)
-@telex.route('/txcxn/<id>', methods=['POST'])
+@app.route('/txcxn/<id>', methods=['POST'])
 def update_txcxn(id):
     txcxn = TxCxn.query.get(id)
 
@@ -74,13 +74,13 @@ def update_txcxn(id):
     db.session.commit()
     return render(TxCxn_schema.jsonify(txcxn))
 
-@telex.route('/txcxn', methods=['GET'])
+@app.route('/txcxn', methods=['GET'])
 def get_txcxns():
     all_txcxns = TxCxn.query.all()
     result = TxCxns_schema.dump(all_txcxns)
     return render(jsonify(result))
 
-@telex.route('/txcxn/<id>', methods=['GET'])
+@app.route('/txcxn/<id>', methods=['GET'])
 def get_txcxn(id):
     txcxn = TxCxn.query.get(id)
     return render(TxCxn_schema.jsonify(txcxn))
@@ -89,7 +89,7 @@ def get_txcxn(id):
 ########## TELEX MESSAGES ##########
 ####################################
 
-@telex.route('/txmsg', methods=['POST'])
+@app.route('/txmsg', methods=['POST'])
 def add_txmsg():
     m_to = request.args.get('to')
     m_from = request.args.get('from')
@@ -117,7 +117,7 @@ def add_txmsg():
     return render(TxMsg_schema.jsonify(new_txmsg))
 
 # Fake DELETE request (fuck CORS)
-@telex.route('/txmsg/<id>', methods=['POST'])
+@app.route('/txmsg/<id>', methods=['POST'])
 def delete_txmsg(id):
     txmsg = TxMsg.query.get(id)
     curr_ip_addr = request.remote_addr
@@ -130,19 +130,19 @@ def delete_txmsg(id):
         return render(jsonify({"deleted": True}))
     return render(jsonify({"deleted": False}))
 
-@telex.route('/txmsg', methods=['GET'])
+@app.route('/txmsg', methods=['GET'])
 def get_txmsgs():
     all_txmsgs = TxMsg.query.all()
     result = TxMsgs_schema.dump(all_txmsgs)
     return render(jsonify(result))
 
-@telex.route('/txmsg/msgto/<id>', methods=['GET'])
+@app.route('/txmsg/msgto/<id>', methods=['GET'])
 def get_filtered_txmsgs(id):
     filtered_txmsgs = TxMsg.query.filter_by(m_to=id)
     result = TxMsgs_schema.dump(filtered_txmsgs)
     return render(jsonify(result))
 
-@telex.route('/txmsg/<id>', methods=['GET'])
+@app.route('/txmsg/<id>', methods=['GET'])
 def get_txmsg(id):
     txmsg = TxMsg.query.get(id)
     return render(TxMsg_schema.jsonify(txmsg))
