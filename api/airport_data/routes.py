@@ -76,6 +76,13 @@ def atis():
         return render(FBW_INVALID_SRC)
     
     if atis:
+        if 'arr' in atis:
+            atis['arr'] = atis['arr'].upper()
+        if 'dep' in atis:
+            atis['dep'] = atis['dep'].upper()
+        if 'combined' in atis:
+            atis['combined'] = atis['combined'].upper()
+
         return render(jsonify(atis))
     else:
         return render(FBW_NO_DATIS)
