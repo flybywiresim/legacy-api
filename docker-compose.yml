@@ -15,5 +15,9 @@ services:
     image: fbw-api:latest
     container_name: fbw_api
     restart: unless-stopped
+    environment:
+      - DATABASE_URI=sqlite:////usr/src/app/db.sqlite
+    volumes:
+      - /home/fbw/api/db.sqlite:/usr/src/app/db.sqlite
     expose:
       - 5000
