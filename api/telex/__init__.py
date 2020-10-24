@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint
+from flask import Blueprint
 
 telex = Blueprint("telex", __name__)
 

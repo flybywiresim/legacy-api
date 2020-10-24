@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint
+from flask import Blueprint
 
 airport_data = Blueprint("airport_data", __name__)
 

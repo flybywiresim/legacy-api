@@ -1,19 +1,13 @@
-import os
 import re
-import json
 import atexit
 import datetime
-from flask import Flask
 from flask import jsonify
 from flask import request
-from flask_caching import Cache
-from flask_sqlalchemy import SQLAlchemy
-from flask_marshmallow import Marshmallow
 from apscheduler.schedulers.background import BackgroundScheduler
 from utilities import Utilities
-from api.telex.models import TxCxn, TxCxnSchema, TxMsg, TxMsgSchema
+from api.telex.models import TxCxn, TxMsg
 from api.telex.models import TxCxn_schema, TxCxns_schema, TxMsg_schema, TxMsgs_schema
-from api import db, ma
+from api import db
 from api.telex import telex
 
 ###############################
