@@ -73,12 +73,12 @@ def atis():
     elif source == 'pilotedge':
         atis = fetch_pilotedge_atis(icao)       
     else:
-        return render(FBW_INVALID_SRC)
+        return render(jsonify({"error": "invalid src"}))
     
     if atis:
         return render(jsonify(atis))
     else:
-        return render(FBW_NO_DATIS)
+        return render(jsonify({"error": "atis not avail"}))
 
 @airport_data.route("/taf")
 def taf():
