@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from utilities import Utilities
 from flask_apscheduler import APScheduler
+import atexit
 
 render = Utilities.render
 http = urllib3.PoolManager()
@@ -28,6 +29,7 @@ def create_app():
     ma.init_app(app)
     scheduler.init_app(app)
     scheduler.start()
+    atexit.register(lambda: scheduler.shutdown())
 
     from api.airport_data import airport_data
     app.register_blueprint(airport_data)

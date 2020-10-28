@@ -1,7 +1,6 @@
 import os
 import re
 import json
-import atexit
 import datetime
 from flask import Flask
 from flask import jsonify
@@ -144,5 +143,3 @@ def get_filtered_txmsgs(id):
 def get_txmsg(id):
     txmsg = TxMsg.query.get(id)
     return render(TxMsg_schema.jsonify(txmsg))
-
-atexit.register(lambda: scheduler.shutdown())
