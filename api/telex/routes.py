@@ -12,7 +12,7 @@ from flask_apscheduler import APScheduler
 from utilities import Utilities
 from api.telex.models import TxCxn, TxCxnSchema, TxMsg, TxMsgSchema
 from api.telex.models import TxCxn_schema, TxCxns_schema, TxMsg_schema, TxMsgs_schema
-from api import db, ma, scheduler
+from api import db, ma
 from api.telex import telex
 
 ###############################
