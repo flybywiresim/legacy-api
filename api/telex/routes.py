@@ -33,9 +33,9 @@ def cleanup_telex():
     print("cleanup_telex() has been run")
     db.session.commit()
 
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=cleanup_telex, trigger="interval", seconds=360)
-scheduler.start()
+# scheduler = BackgroundScheduler()
+# scheduler.add_job(func=cleanup_telex, trigger="interval", seconds=360)
+# scheduler.start()
 
 #######################################
 ########## TELEX CONNECTIONS ##########
@@ -147,4 +147,4 @@ def get_txmsg(id):
     txmsg = TxMsg.query.get(id)
     return render(TxMsg_schema.jsonify(txmsg))
 
-atexit.register(lambda: scheduler.shutdown())
+# atexit.register(lambda: scheduler.shutdown())
