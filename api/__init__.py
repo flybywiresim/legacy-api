@@ -4,6 +4,8 @@ from flask_caching import Cache
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from utilities import Utilities
+from apscheduler.schedulers.background import BackgroundScheduler
+from api.telex.routes import cleanup_telex
 
 render = Utilities.render
 http = urllib3.PoolManager()
@@ -29,6 +31,11 @@ def create_app():
 
     from api.telex import telex
     app.register_blueprint(telex)
+    
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=cleanup_telex, trigger="interval", seconds=360)
+    scheduler.start()
+    atexit.register(lambda: scheduler.shutdown())
 
     @app.route("/")
     def index():
