@@ -4,6 +4,7 @@ import datetime
 from flask import jsonify
 from flask import request
 from apscheduler.schedulers.background import BackgroundScheduler
+from flask_apscheduler import APScheduler
 from utilities import Utilities
 from api.telex.models import TxCxn, TxMsg
 from api.telex.models import TxCxn_schema, TxCxns_schema, TxMsg_schema, TxMsgs_schema
@@ -17,19 +18,17 @@ from api.telex import telex
 render = Utilities.render
 
 def cleanup_telex():
-    cutoff = datetime.datetime.now() - datetime.timedelta(minutes=6)
-    filtered_txcxns = TxCxn.query.filter(TxCxn.last_contact < cutoff)
-    for c in filtered_txcxns:
-        filtered_msgs = TxMsg.query.filter(TxMsg.m_to == c.flight)
-        for m in filtered_msgs:
-            db.session.delete(m)
-        db.session.delete(c)
-    print("cleanup_telex() has been run")
-    db.session.commit()
+    with db.app.app_context():
+        cutoff = datetime.datetime.now() - datetime.timedelta(minutes=6)
+        filtered_txcxns = TxCxn.query.filter(TxCxn.last_contact < cutoff)
+        for c in filtered_txcxns:
+            filtered_msgs = TxMsg.query.filter(TxMsg.m_to == c.flight)
+            for m in filtered_msgs:
+                db.session.delete(m)
+            db.session.delete(c)
+        print("cleanup_telex() has been run")
+        db.session.commit()
 
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=cleanup_telex, trigger="interval", seconds=360)
-scheduler.start()
 
 #######################################
 ########## TELEX CONNECTIONS ##########
@@ -140,5 +139,3 @@ def get_filtered_txmsgs(id):
 def get_txmsg(id):
     txmsg = TxMsg.query.get(id)
     return render(TxMsg_schema.jsonify(txmsg))
-
-atexit.register(lambda: scheduler.shutdown())
