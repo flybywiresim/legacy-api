@@ -1,11 +1,14 @@
+'''
+FlyByWire API
+'''
+
 import urllib3
 from flask import Flask
 from flask_caching import Cache
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
-from utilities import Utilities
+from utilities import render
 
-render = Utilities.render
 http = urllib3.PoolManager()
 cache = Cache(config={
     'CACHE_TYPE': 'filesystem',

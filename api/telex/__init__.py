@@ -1,4 +1,10 @@
-from flask import Flask, Blueprint
+'''
+Telex Module
+
+This module provides a mechanism to send Telex messages.
+'''
+
+from flask import Blueprint
 
 telex = Blueprint("telex", __name__)
 
