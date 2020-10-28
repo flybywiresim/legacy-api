@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import secrets
 import datetime
 from flask import Flask
 from flask import jsonify
@@ -10,8 +11,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_apscheduler import APScheduler
 from utilities import Utilities
-from api.telex.models import TxCxn, TxCxnSchema, TxMsg, TxMsgSchema
-from api.telex.models import TxCxn_schema, TxCxns_schema, TxMsg_schema, TxMsgs_schema
+from api.telex.models import TxCxn, TxCxnSchema, TxCxnPrivateSchema, TxMsg, TxMsgSchema
+from api.telex.models import TxCxn_schema, TxCxns_schema, TxCxn_private_schema, TxMsg_schema, TxMsgs_schema
 from api import db, ma
 from api.telex import telex
 
@@ -44,15 +45,18 @@ def add_txcxn():
     latlong = request.args.get('latlong')
     ip_addr = str(request.remote_addr)
     last_contact = datetime.datetime.now()
+    # Generate random private key
+    private_key = secrets.token_hex(32)
 
     existing_flight = TxCxn.query.filter_by(flight=flight).first()
     if existing_flight or flight == "":
         return render(jsonify({"error": "flight_in_use"}))
 
-    new_txcxn = TxCxn(flight, ip_addr, latlong, last_contact)
+    new_txcxn = TxCxn(flight, ip_addr, latlong, private_key, last_contact)
     db.session.add(new_txcxn)
     db.session.commit()
-    return render(TxCxn_schema.jsonify(new_txcxn))
+    # Private schema returns private ID, only on cxn creation
+    return render(TxCxn_private_schema.jsonify(new_txcxn))
 
 # Fake PUT request (fuck CORS)
 @telex.route('/txcxn/<id>', methods=['POST'])
@@ -60,11 +64,11 @@ def update_txcxn(id):
     txcxn = TxCxn.query.get(id)
 
     latlong = request.args.get('latlong')
-    ip_addr = str(request.remote_addr)
     update = request.args.get('update')
+    sentkey = request.args.get('key')
 
-    if ip_addr != txcxn.ip_addr or update != "yes":
-        return render(jsonify({"error": "ip_address_changed"}))
+    if sentkey != txcxn.private_key or update != "yes":
+        return render(jsonify({"error": "invalid_private_key"}))
 
     txcxn.latlong = latlong
     txcxn.last_contact = datetime.datetime.now()
@@ -91,6 +95,7 @@ def add_txmsg():
     m_to = request.args.get('to')
     m_from = request.args.get('from')
     message = request.args.get('message')
+    sentkey = request.args.get('key')
     
     message = re.sub(r'([^A-Z0-9/ +-\.;])+', '', message)
     filtered = re.sub(r'\W+', '', message)
@@ -98,14 +103,13 @@ def add_txmsg():
     if pattern.match(filtered):
         return render(jsonify({"error": "prohibited_regex_hit"}))
     
-    curr_ip_addr = request.remote_addr
     sender_cxn = TxCxn.query.filter_by(flight=m_from).first()
     recipient_cxn = TxCxn.query.filter_by(flight=m_to).first()
 
     if not recipient_cxn:
         return render(jsonify({"error": "recipient_not_found"}))
     
-    if not sender_cxn or sender_cxn.ip_addr != curr_ip_addr:
+    if not sender_cxn or sender_cxn.private_key != sentkey:
         return render(jsonify({"error": "sender_permissions_error"}))
 
     new_txmsg = TxMsg(m_to, m_from, message)
@@ -117,11 +121,11 @@ def add_txmsg():
 @telex.route('/txmsg/<id>', methods=['POST'])
 def delete_txmsg(id):
     txmsg = TxMsg.query.get(id)
-    curr_ip_addr = request.remote_addr
+    sentkey = request.args.get('key')
     deleteThis = request.args.get('delete')
     recipient_cxn = TxCxn.query.filter_by(flight=txmsg.m_to).first()
 
-    if recipient_cxn and recipient_cxn.ip_addr == curr_ip_addr and deleteThis == "yes":
+    if recipient_cxn and recipient_cxn.private_key == sentkey and deleteThis == "yes":
         db.session.delete(txmsg)
         db.session.commit()
         return render(jsonify({"deleted": True}))
