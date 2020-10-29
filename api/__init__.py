@@ -37,6 +37,9 @@ def create_app():
     from api.telex import telex
     app.register_blueprint(telex)
 
+    with app.app_context():
+        db.create_all()
+
     @app.route("/")
     def index():
         return render(FBW_WELCOME_MSG)

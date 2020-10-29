@@ -6,17 +6,23 @@ class TxCxn(db.Model):
     flight = db.Column(db.String(24))
     ip_addr = db.Column(db.String(46))
     latlong = db.Column(db.String(50))
+    private_key = db.Column(db.String(128))
     last_contact = db.Column(db.DateTime, server_default=db.func.now(), server_onupdate=db.func.now())
 
-    def __init__(self, flight, ip_addr, latlong, last_contact=datetime.datetime.now()):
+    def __init__(self, flight, ip_addr, latlong, private_key, last_contact=datetime.datetime.now()):
         self.flight = flight
         self.ip_addr = ip_addr
         self.latlong = latlong
+        self.private_key = private_key
         self.last_contact = last_contact
 
 class TxCxnSchema(ma.Schema):
     class Meta:
         fields = ('id', 'flight', 'latlong', 'last_contact')
+
+class TxCxnPrivateSchema(ma.Schema):
+    class Meta:
+        fields = ('id', 'flight', 'latlong', 'last_contact', 'private_key')
 
 class TxMsg(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -36,5 +42,6 @@ class TxMsgSchema(ma.Schema):
 
 TxCxn_schema = TxCxnSchema()
 TxCxns_schema = TxCxnSchema(many=True)
+TxCxn_private_schema = TxCxnPrivateSchema()
 TxMsg_schema = TxMsgSchema()
 TxMsgs_schema = TxMsgSchema(many=True)
